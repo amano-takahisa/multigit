@@ -23,25 +23,29 @@ class bcolors:
 
 def add_args(parser: argparse.ArgumentParser):
     subparsers = parser.add_subparsers(
-        title="multigit", description="Execute arbitrary command or clone"
+        title="multigit",
+        description="Execute arbitrary command or clone",
     )
 
     # run sub-command ######################
     parser_command = subparsers.add_parser(
-        name="run", help="Execute arbitrary command at each git root directories."
+        name="run",
+        help="Execute arbitrary command at each git root directories.",
     )
     parser_command.add_argument(
         "command",
         type=str,
         help="Any arbitrary command you want to execute in the root directory "
-        "of each repository. Git directories are searched only up to the first "
-        "level. Command need to be given as a string, for example, 'ls -lha'.",
+        "of each repository. Git directories are searched only up to the "
+        "first level. Command need to be given as a string, for example, "
+        "'ls -lha'.",
     )
     parser_command.set_defaults(func=run_command)
 
     # clone sub-command ######################
     parser_git = subparsers.add_parser(
-        name="clone", help="Clone all repositories of the specified GitHub user."
+        name="clone",
+        help="Clone all repositories of the specified GitHub user.",
     )
     parser_git.add_argument(
         "-u", "--username", required=True, help="GitHub account name"
