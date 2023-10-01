@@ -4,12 +4,14 @@ Execute a command on multiple git repositories.
 """
 
 import argparse
+import json
 import os
 import pathlib
 import subprocess
+from typing import NamedTuple
 
 
-class bcolors:
+class Bcolors:
     HEADER = "\033[95m"
     OKBLUE = "\033[94m"
     OKCYAN = "\033[96m"
@@ -19,6 +21,13 @@ class bcolors:
     ENDC = "\033[0m"
     BOLD = "\033[1m"
     UNDERLINE = "\033[4m"
+
+
+class Default(NamedTuple):
+    limit: int = 100
+
+
+DEFAULT = Default()
 
 
 def add_args(parser: argparse.ArgumentParser):
@@ -31,6 +40,7 @@ def add_args(parser: argparse.ArgumentParser):
     parser_command = subparsers.add_parser(
         name="run",
         help="Execute arbitrary command at each git root directories.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser_command.add_argument(
         "command",
@@ -46,17 +56,24 @@ def add_args(parser: argparse.ArgumentParser):
     parser_git = subparsers.add_parser(
         name="clone",
         help="Clone all repositories of the specified GitHub user.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser_git.add_argument(
+        "-L",
+        "--limit",
+        required=False,
+        type=int,
+        default=DEFAULT.limit,
+        help="Maximum number of repositories to list.",
     )
     parser_git.add_argument(
         "-u", "--username", required=True, help="GitHub account name"
     )
     parser_git.add_argument(
-        "-n",
-        "--max-repos",
-        default=50,
-        help="Maximum number of repositories to be cloned.",
+        "options",
+        type=str,
+        help="git clone options.",
     )
-
     parser_git.set_defaults(func=clone)
 
 
@@ -65,17 +82,42 @@ def run_command(command: str):
     git_dirs = cwd.glob("*/.git")
     for git_dir in git_dirs:
         git_root = git_dir.parent
-        print(f"\n{bcolors.HEADER}{git_root.name}{bcolors.ENDC}")
+        print(f"\n{Bcolors.HEADER}{git_root.name}{Bcolors.ENDC}")
         subprocess.run(command, shell=True, cwd=git_root)
 
 
-def clone(*args, **kwargs):
-    raise NotImplementedError
+def clone(username: str, options: str = "", limit: int = DEFAULT.limit):
+    cmd = [
+        "gh",
+        "repo",
+        "list",
+        "--json",
+        "name",
+        "--limit",
+        str(limit),
+        username,
+    ]
+    output = subprocess.run(cmd, text=True, capture_output=True, check=True)
+    repo_names = [item["name"] for item in json.loads(output.stdout)]
+    remote_repos = [
+        f"git@github.com:{username}/{repo_name}.git"
+        for repo_name in repo_names
+    ]
+    cmd = "git clone " + options
+    for i, (repo_name, remote_repo) in enumerate(
+        zip(repo_names, remote_repos)
+    ):
+        print(
+            f"\n{Bcolors.HEADER}{i+1}/{len(repo_names)}: "
+            f"{repo_name}{Bcolors.ENDC}"
+        )
+        cmd_repo = cmd + f" -- {remote_repo}"
+        subprocess.run(cmd_repo, shell=True)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog="multigit",
+        prog="multigit", formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     add_args(parser)
     parser.set_defaults(func=parser.print_help)
