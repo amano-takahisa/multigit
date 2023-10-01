@@ -25,6 +25,7 @@ class Bcolors:
 
 class Default(NamedTuple):
     limit: int = 100
+    options: str = ""
 
 
 DEFAULT = Default()
@@ -72,6 +73,8 @@ def add_args(parser: argparse.ArgumentParser):
     parser_git.add_argument(
         "options",
         type=str,
+        nargs="?",
+        default=DEFAULT.options,
         help="git clone options.",
     )
     parser_git.set_defaults(func=clone)
