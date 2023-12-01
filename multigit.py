@@ -82,7 +82,7 @@ def add_args(parser: argparse.ArgumentParser):
 
 def run_command(command: str):
     cwd = pathlib.Path(os.getcwd())
-    git_dirs = cwd.glob("*/.git")
+    git_dirs = sorted(list(cwd.glob("*/.git")))
     for git_dir in git_dirs:
         git_root = git_dir.parent
         print(f"\n{Bcolors.HEADER}{git_root.name}{Bcolors.ENDC}")
@@ -110,6 +110,10 @@ def clone(username: str, options: str = "", limit: int = DEFAULT.limit):
     for i, (repo_name, remote_repo) in enumerate(
         zip(repo_names, remote_repos)
     ):
+        print(repo_name)
+        if pathlib.Path(os.getcwd()).joinpath(repo_name).exists():
+            print(f"{repo_name} is exists.")
+            continue
         print(
             f"\n{Bcolors.HEADER}{i+1}/{len(repo_names)}: "
             f"{repo_name}{Bcolors.ENDC}"
