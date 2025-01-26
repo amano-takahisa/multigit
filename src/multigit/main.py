@@ -122,7 +122,7 @@ def clone(username: str, options: str = "", limit: int = DEFAULT.limit):
         subprocess.run(cmd_repo, shell=True)
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         prog="multigit", formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -131,3 +131,6 @@ if __name__ == "__main__":
     kwargs = vars(parser.parse_args())
     func = kwargs.pop("func")
     func(**kwargs)
+
+if __name__ == "__main__":
+    main()
