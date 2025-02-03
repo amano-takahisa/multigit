@@ -27,3 +27,30 @@ Already up to date.
 web_search_filter
 Already up to date.
 ```
+
+## Development
+
+### Testing
+
+Test in a container
+
+```console
+docker build \
+    -t multigit \
+    -f docker/Dockerfile \
+    --build-arg USER_NAME=$(whoami) \
+    .
+
+docker run -it --rm \
+    -v $(pwd):/home/$(whoami)/repos \
+    -w /home/$(whoami)/repos \
+    multigit:latest \
+    bash
+```
+
+Then, in the container
+
+```console
+pip install .
+pytest
+```
