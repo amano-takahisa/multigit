@@ -5,9 +5,28 @@ Tools to run commands in multiple git repositories.
 Useful for performing commands such as `git pull`, `git status` on several
 local repositories at once.
 
+## Installation
+
+```console
+pip install .
+```
+
 ## Usage
 
-Run `multigit.py run <command>` in a directory which contains multiple git repositories.
+`multigit list` lists all git repositories in the current directory.
+
+```console
+multigit list
+```
+
+`multigit run` runs a command in all git repositories in the current directory.
+
+```console
+# Run 'git fetch' in all git repositories
+multigit run 'git fetch'
+```
+
+`multigit clone `
 
 ## Examples
 
@@ -51,6 +70,19 @@ docker run -it --rm \
 Then, in the container
 
 ```console
-pip install .
-pytest
+pip install -e .
+multigit
+```
+
+Test locally
+
+```console
+pixi install
+pixi shell --environment dev
+multigit
+```
+
+```console
+ruff check --fix
+ruff format -v
 ```
