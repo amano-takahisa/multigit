@@ -1,10 +1,14 @@
 [project]
 authors = [{name = "Taka", email = "amano.takahisa@gmail.com"}]
-dependencies = []
 description = "Add a short description here"
 name = "multigit"
 requires-python = ">= 3.11"
 version = "0.1.0"
+
+dependencies = [
+    "click",
+    "rich",
+]
 
 [project.scripts]
 multigit = "multigit.main:main"
@@ -20,14 +24,37 @@ platforms = ["linux-64"]
 [tool.pixi.pypi-dependencies]
 multigit = { path = ".", editable = true }
 
-[tool.pixi.tasks]
+[tool.pixi.feature.dev.dependencies]
+ruff = "*"
 
-[tool.black]
+[tool.pixi.environments]
+default = { features = [], solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+
+[tool.ruff]
 line-length = 79
 
-[tool.isort]
-profile = "black"
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
-[tool.pyright]
-venvPath = "."
-venv = "venv"
+[tool.ruff.lint]
+select = [
+  "ALL",
+  ]
+ignore = [
+  "Q000",  # Single quotes found but double quotes preferred
+  "ANN003",  # Missing type annotation for **{name}
+  "ANN101",  # Missing type annotation for self in method
+  "D100",  # Missing docstring in public module
+  "D104",  # Missing docstring in public package
+  "D105",  # Missing docstring in magic method
+  "ISC001",  # Implicitly concatenated string literals on one line
+  "COM812",  # Trailing comma missing. Compatibility issues https://github.com/astral-sh/ruff/issues/9216
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.format]
+quote-style = "single"
+docstring-code-format = true
