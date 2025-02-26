@@ -4,8 +4,10 @@
 import json
 import pathlib
 import subprocess
+import tomllib
 
 import click
+import tomlkit
 
 
 class Bcolors:
@@ -28,12 +30,72 @@ class Defaults:
     LIMIT: int = 100
     OPTIONS: str = ''
 
+# path to a config file in $XDG_CONFIG_HOME/multigit/config or
+# ~/.config/multigit/config or ~/.multigit/config
+CONFIG_FILE = pathlib.Path(
+    click.get_app_dir('multigit')
+).joinpath('config.toml')
 
 @click.group(
     help='Execute a command on multiple git repositories.',
 )
 def main() -> None:
     """Execute a command on multiple git repositories."""
+
+@main.command()
+@click.argument(
+    'path',
+    nargs=-1,
+    type=pathlib.Path,
+)
+def add(path: tuple[pathlib.Path]) -> None:
+    """Add a new repository."""
+    click.echo(f'path: {path}')
+    # Add path to [reopositories] in the config toml file as default value as
+    # a list of paths.
+    # If the config file does not exist, create it.
+    if not CONFIG_FILE.exists():
+        CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        CONFIG_FILE.touch()
+        doc = tomlkit.document()
+    else:
+        doc = tomlkit.loads(CONFIG_FILE.read_text())
+    repositories_table = tomlkit.table()
+    repositories = tomlkit.item(sorted( [str(p.resolve()) for p in path] )).multiline(True)
+    repositories_table['default'] = repositories
+    doc['repositories'] = repositories_table
+    with CONFIG_FILE.open('w') as f:
+        tomlkit.dump(doc, f)
+    return
+    with CONFIG_FILE.open('rb') as f:
+        config = tomllib.load(f)
+        repositories = config.get('repositories', [])
+        for p in path:
+            if p.is_dir():
+                repositories.append(str(p.resolve()))
+            else:
+                click.echo(f'{p} is not a directory.')
+        config['repositories'] = list(set(repositories))
+    with CONFIG_FILE.open('w') as f:
+        toml.dump(config, f)
+
+
+
+@main.group()
+def config() -> None:
+    """Set configuration."""
+    click.echo('group: ')
+
+
+
+@main.group()
+def second_level_2() -> None:
+    """Second level 2."""
+
+
+@second_level_2.command()
+def third_level_command_3() -> None:
+    """Third level command under 2nd level 2."""
 
 
 @main.command(
