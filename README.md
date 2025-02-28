@@ -1,6 +1,6 @@
-# multigit
+# totaliterm
 
-Tools to run commands in multiple git repositories.
+Tools to run commands in multiple directory.
 
 Useful for performing commands such as `git pull`, `git status` on several
 local repositories at once.
@@ -13,70 +13,50 @@ pip install .
 
 ## Usage
 
-Register a local git repository to be managed by multigit.
+Register a local git repository to be managed by totaliterm.
 
 ```console
-multigit add /path/to/repo
+totaliterm add /path/to/dir
 ```
 
-The above command will add `config` file to `$XDG_CONFIG_HOME/multigit` or
-`~/.config/multigit` with the following content.
+The above command will add `config` file to `$XDG_CONFIG_HOME/totaliterm` or
+`~/.config/totaliterm` with the following content.
 
 ```ini
-[repositories]
+[directories]
 default = [
-    "/path/to/repo"
+    "/path/to/dir"
 ]
 ```
 
-With `--group` option, you can add a repository to a group.
+With `--domain` option, you can specify a group to which directories belong.
 
 ```console
-multigit add /path/to/repo --group my_group
+totaliterm add path/to/dir1 path/to/dir2 --domain my_project
 ```
 
-The above command will add `config` file to `$XDG_CONFIG_HOME/multigit` or
-`~/.config/multigit` with the following content.
+The above command will add `config` file to `$XDG_CONFIG_HOME/totaliterm` or
+`~/.config/totaliterm` with the following content.
 
 ```ini
-[repositories]
-my_group = [
-    "/path/to/repo"
+[directories]
+my_project = [
+    "/path/to/dir1",
+    "/path/to/dir2",
 ]
 ```
 
-`multigit list` lists all repositories registered to be managed by multigit.
+`totaliterm list` lists all directories registered to totaliterm.
 
 ```console
-multigit list
+totaliterm list
 ```
 
-`multigit run` runs a command in all git repositories in the current directory.
+`totaliterm run` runs a command in all directories managed by totaliterm.
 
 ```console
-# Run 'git fetch' in all git repositories
-multigit run 'git fetch'
-```
-
-`multigit clone `
-
-## Examples
-
-```console
-/home/takahisa/repos/$ ls -lha
-dotfiles    numheader    multigit    web_search_filter
-/home/takahisa/repos/$ ./multigit/multigit.py run 'git pull'
-dotfiles
-Already up to date.
-
-numheader
-Already up to date.
-
-multigit
-Already up to date.
-
-web_search_filter
-Already up to date.
+# Run 'git status' in all git repositories
+totaliterm run 'git status'
 ```
 
 ## Development
@@ -87,7 +67,7 @@ Test in a container
 
 ```console
 docker build \
-    -t multigit \
+    -t totaliterm \
     -f docker/Dockerfile \
     --build-arg USER_NAME=$(whoami) \
     .
@@ -95,7 +75,7 @@ docker build \
 docker run -it --rm \
     -v $(pwd):/home/$(whoami)/repos \
     -w /home/$(whoami)/repos \
-    multigit:latest \
+    totaliterm:latest \
     bash
 ```
 
@@ -103,7 +83,7 @@ Then, in the container
 
 ```console
 pip install -e .
-multigit
+totaliterm
 ```
 
 Test locally
@@ -111,7 +91,7 @@ Test locally
 ```console
 pixi install
 pixi shell --environment dev
-multigit
+totaliterm
 ```
 
 ```console

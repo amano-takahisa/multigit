@@ -33,9 +33,9 @@ class Defaults:
     OPTIONS: str = ''
 
 
-# path to a config file in $XDG_CONFIG_HOME/multigit/config or
-# ~/.config/multigit/config or ~/.multigit/config
-CONFIG_FILE_PATH = pathlib.Path(click.get_app_dir('multigit')).joinpath(
+# path to a config file in $XDG_CONFIG_HOME/totaliterm/config or
+# ~/.config/totaliterm/config or ~/.totaliterm/config
+CONFIG_FILE_PATH = pathlib.Path(click.get_app_dir('totaliterm')).joinpath(
     'config.toml'
 )
 if not CONFIG_FILE_PATH.exists():
