@@ -8,6 +8,8 @@ import tomllib
 
 import click
 import tomlkit
+import tomlkit.items
+import tomlkit.toml_file
 
 
 class Bcolors:
@@ -30,62 +32,71 @@ class Defaults:
     LIMIT: int = 100
     OPTIONS: str = ''
 
+
 # path to a config file in $XDG_CONFIG_HOME/multigit/config or
 # ~/.config/multigit/config or ~/.multigit/config
-CONFIG_FILE = pathlib.Path(
-    click.get_app_dir('multigit')
-).joinpath('config.toml')
+CONFIG_FILE_PATH = pathlib.Path(click.get_app_dir('multigit')).joinpath(
+    'config.toml'
+)
+if not CONFIG_FILE_PATH.exists():
+    CONFIG_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CONFIG_FILE_PATH.touch()
+
 
 @click.group(
-    help='Execute a command on multiple git repositories.',
+    help='Execute a command on multiple directories.',
 )
 def main() -> None:
-    """Execute a command on multiple git repositories."""
+    """Execute a command on multiple directories."""
 
-@main.command()
+
+@main.command(
+    help='Add directories to the configuration file.',
+)
 @click.argument(
     'path',
     nargs=-1,
     type=pathlib.Path,
 )
-def add(path: tuple[pathlib.Path]) -> None:
-    """Add a new repository."""
+@click.option(
+    '--domain',
+    type=str,
+    default='default',
+    show_default=True,
+    help='Domain of directories.',
+)
+def add(
+    path: tuple[pathlib.Path],
+    domain: str = 'default',
+) -> None:
+    """Add directories to the configuration file."""
     click.echo(f'path: {path}')
-    # Add path to [reopositories] in the config toml file as default value as
-    # a list of paths.
-    # If the config file does not exist, create it.
-    if not CONFIG_FILE.exists():
-        CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-        CONFIG_FILE.touch()
-        doc = tomlkit.document()
-    else:
-        doc = tomlkit.loads(CONFIG_FILE.read_text())
-    repositories_table = tomlkit.table()
-    repositories = tomlkit.item(sorted( [str(p.resolve()) for p in path] )).multiline(True)
-    repositories_table['default'] = repositories
-    doc['repositories'] = repositories_table
-    with CONFIG_FILE.open('w') as f:
-        tomlkit.dump(doc, f)
-    return
-    with CONFIG_FILE.open('rb') as f:
-        config = tomllib.load(f)
-        repositories = config.get('repositories', [])
-        for p in path:
-            if p.is_dir():
-                repositories.append(str(p.resolve()))
-            else:
-                click.echo(f'{p} is not a directory.')
-        config['repositories'] = list(set(repositories))
-    with CONFIG_FILE.open('w') as f:
-        toml.dump(config, f)
-
+    config_file = tomlkit.toml_file.TOMLFile(CONFIG_FILE_PATH)
+    doc = config_file.read()
+    dir_table: tomlkit.items.Table = doc.get('directories', tomlkit.table())
+    doc.update({'directories': dir_table})
+    dir_array: tomlkit.items.Array = dir_table.get(
+        domain, tomlkit.array().multiline(multiline=True)
+    )
+    dir_table[domain] = dir_array
+    for p in path:
+        if not p.exists():
+            click.echo(f'{p} does not exist.')
+            continue
+        if not p.is_dir():
+            click.echo(f'{p} is not a directory.')
+            continue
+        if p.resolve().as_posix() in dir_array:
+            click.echo(f'{p} is already in the list.')
+            continue
+        dir_array.append(p.resolve().as_posix())
+    config_file.write(doc)
 
 
 @main.group()
 def config() -> None:
     """Set configuration."""
     click.echo('group: ')
-
 
 
 @main.group()
