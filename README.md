@@ -13,7 +13,39 @@ pip install .
 
 ## Usage
 
-`multigit list` lists all git repositories in the current directory.
+Register a local git repository to be managed by multigit.
+
+```console
+multigit add /path/to/repo
+```
+
+The above command will add `config` file to `$XDG_CONFIG_HOME/multigit` or
+`~/.config/multigit` with the following content.
+
+```ini
+[repositories]
+default = [
+    "/path/to/repo"
+]
+```
+
+With `--group` option, you can add a repository to a group.
+
+```console
+multigit add /path/to/repo --group my_group
+```
+
+The above command will add `config` file to `$XDG_CONFIG_HOME/multigit` or
+`~/.config/multigit` with the following content.
+
+```ini
+[repositories]
+my_group = [
+    "/path/to/repo"
+]
+```
+
+`multigit list` lists all repositories registered to be managed by multigit.
 
 ```console
 multigit list

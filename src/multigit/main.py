@@ -4,8 +4,12 @@
 import json
 import pathlib
 import subprocess
+import tomllib
 
 import click
+import tomlkit
+import tomlkit.items
+import tomlkit.toml_file
 
 
 class Bcolors:
@@ -29,11 +33,80 @@ class Defaults:
     OPTIONS: str = ''
 
 
+# path to a config file in $XDG_CONFIG_HOME/multigit/config or
+# ~/.config/multigit/config or ~/.multigit/config
+CONFIG_FILE_PATH = pathlib.Path(click.get_app_dir('multigit')).joinpath(
+    'config.toml'
+)
+if not CONFIG_FILE_PATH.exists():
+    CONFIG_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CONFIG_FILE_PATH.touch()
+
+
 @click.group(
-    help='Execute a command on multiple git repositories.',
+    help='Execute a command on multiple directories.',
 )
 def main() -> None:
-    """Execute a command on multiple git repositories."""
+    """Execute a command on multiple directories."""
+
+
+@main.command(
+    help='Add directories to the configuration file.',
+)
+@click.argument(
+    'path',
+    nargs=-1,
+    type=pathlib.Path,
+)
+@click.option(
+    '--domain',
+    type=str,
+    default='default',
+    show_default=True,
+    help='Domain of directories.',
+)
+def add(
+    path: tuple[pathlib.Path],
+    domain: str = 'default',
+) -> None:
+    """Add directories to the configuration file."""
+    click.echo(f'path: {path}')
+    config_file = tomlkit.toml_file.TOMLFile(CONFIG_FILE_PATH)
+    doc = config_file.read()
+    dir_table: tomlkit.items.Table = doc.get('directories', tomlkit.table())
+    doc.update({'directories': dir_table})
+    dir_array: tomlkit.items.Array = dir_table.get(
+        domain, tomlkit.array().multiline(multiline=True)
+    )
+    dir_table[domain] = dir_array
+    for p in path:
+        if not p.exists():
+            click.echo(f'{p} does not exist.')
+            continue
+        if not p.is_dir():
+            click.echo(f'{p} is not a directory.')
+            continue
+        if p.resolve().as_posix() in dir_array:
+            click.echo(f'{p} is already in the list.')
+            continue
+        dir_array.append(p.resolve().as_posix())
+    config_file.write(doc)
+
+
+@main.group()
+def config() -> None:
+    """Set configuration."""
+    click.echo('group: ')
+
+
+@main.group()
+def second_level_2() -> None:
+    """Second level 2."""
+
+
+@second_level_2.command()
+def third_level_command_3() -> None:
+    """Third level command under 2nd level 2."""
 
 
 @main.command(
