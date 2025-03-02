@@ -29,10 +29,10 @@ default = [
 ]
 ```
 
-With `--domain` option, you can specify a group to which directories belong.
+With `--tag` option, you can specify a group to which directories belong.
 
 ```console
-totaliterm add path/to/dir1 path/to/dir2 --domain my_project
+totaliterm add path/to/dir1 path/to/dir2 --tag my_project
 ```
 
 The above command will add `config` file to `$XDG_CONFIG_HOME/totaliterm` or

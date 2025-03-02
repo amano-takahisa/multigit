@@ -4,12 +4,14 @@
 import json
 import pathlib
 import subprocess
-import tomllib
 
 import click
 import tomlkit
 import tomlkit.items
 import tomlkit.toml_file
+from rich import pretty, print
+
+pretty.install()
 
 
 class Bcolors:
@@ -59,26 +61,25 @@ def main() -> None:
     type=pathlib.Path,
 )
 @click.option(
-    '--domain',
+    '--tag',
     type=str,
     default='default',
     show_default=True,
-    help='Domain of directories.',
+    help='tag of directories.',
 )
 def add(
     path: tuple[pathlib.Path],
-    domain: str = 'default',
+    tag: str = 'default',
 ) -> None:
     """Add directories to the configuration file."""
-    click.echo(f'path: {path}')
     config_file = tomlkit.toml_file.TOMLFile(CONFIG_FILE_PATH)
     doc = config_file.read()
     dir_table: tomlkit.items.Table = doc.get('directories', tomlkit.table())
     doc.update({'directories': dir_table})
     dir_array: tomlkit.items.Array = dir_table.get(
-        domain, tomlkit.array().multiline(multiline=True)
-    )
-    dir_table[domain] = dir_array
+        tag, tomlkit.array()
+    ).multiline(multiline=True)
+    dir_table[tag] = dir_array
     for p in path:
         if not p.exists():
             click.echo(f'{p} does not exist.')
@@ -197,54 +198,37 @@ def run(command: str) -> None:
 
 @main.command(
     name='list',
-    help='List all repositories.',
+    help='List registered directories.',
 )
 @click.option(
-    '--github',
-    is_flag=True,
-    help=(
-        'List all repositories of your GitHub account.'
-        'You need to install and authenticate gh-cli.'
-    ),
-)
-@click.option(
-    '-L',
-    '--limit',
-    type=int,
-    default=Defaults.LIMIT,
+    '--tag',
+    type=str,
+    default='default',
     show_default=True,
-    help='Maximum number of repositories to list.',
+    help='tag of directories.',
 )
-def list_repos(
+@click.option(
+    '-a',
+    '--all',
+    'show_all_tags',
+    is_flag=True,
+    help='List all directories of all tags.',
+)
+def list_dirs(
+    tag: str = 'default',
     *,
-    github: bool = False,
-    limit: int = Defaults.LIMIT,
+    show_all_tags: bool = False,
 ) -> None:
-    """List all repositories."""
-    if github:
-        cmd = [
-            'gh',
-            'repo',
-            'list',
-            '--limit',
-            str(limit),
-            '--json',
-            'name',
-        ]
-        output = subprocess.run(
-            cmd, text=True, capture_output=True, check=True
-        )
-        repo_names = sorted(
-            [item['name'] for item in json.loads(output.stdout)]
-        )
-        for i, repo_name in enumerate(repo_names):
-            click.echo(f'{i + 1}: {repo_name}')
-    else:
-        cwd = pathlib.Path.cwd()
-        git_dirs = sorted(cwd.glob('*/.git'))
-        for i, git_dir in enumerate(git_dirs):
-            git_root = git_dir.parent
-            click.echo(f'{i + 1}: {git_root.name}')
+    """List registered directories."""
+    config_file = tomlkit.toml_file.TOMLFile(CONFIG_FILE_PATH)
+    doc = config_file.read()
+    dir_table: tomlkit.items.Table = doc.get('directories', tomlkit.table())
+    for tag_, dir_array in dir_table.items():
+        if not show_all_tags and tag_ != tag:
+            continue
+        print(f'{tag_}:')
+        for i, dir_ in enumerate(dir_array):
+            print(f'{i + 1}: {dir_}')
 
 
 if __name__ == '__main__':
