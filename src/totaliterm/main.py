@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Execute a command on multiple git repositories."""
 
-import json
 import pathlib
 import subprocess
 
@@ -12,28 +11,6 @@ import tomlkit.toml_file
 from rich import pretty, print  # noqa: A004
 
 pretty.install()
-
-
-class Bcolors:
-    """Colors for the terminal."""
-
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-
-class Defaults:
-    """Default values."""
-
-    LIMIT: int = 100
-    OPTIONS: str = ''
-
 
 # path to a config file in $XDG_CONFIG_HOME/totaliterm/config or
 # ~/.config/totaliterm/config or ~/.totaliterm/config
