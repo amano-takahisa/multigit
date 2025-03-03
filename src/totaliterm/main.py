@@ -8,7 +8,9 @@ import click
 import tomlkit
 import tomlkit.items
 import tomlkit.toml_file
-from rich import pretty, print  # noqa: A004
+from rich import pretty
+from rich.console import Console
+from rich.style import Style
 
 pretty.install()
 
@@ -94,12 +96,13 @@ def third_level_command_3() -> None:
     "'ls -lha'.",
 )
 @click.option(
+    '-s',
     '--skip',
     'skip',
-    multiple=True,
-    type=int,
-    default=(),
-    help='Skip directories. Give indices of directories to skip.',
+    type=str,
+    default='',
+    help='Skip directories. Give indices of directories to skip.'
+    "For example, '-s 1,3'.",
 )
 @click.option(
     '-t',
@@ -120,16 +123,20 @@ def run(
     *,
     tag: str = 'default',
     yes: bool = False,
-    skip: tuple[int] = (),
+    skip: str = '',
 ) -> None:
     """Any arbitrary command you want to execute in the directory."""
+    console = Console()
+    skip_list = [int(i) for i in skip.split(',')]
+    console.print(skip_list)
     for i, dir_ in enumerate(
         tomlkit.toml_file.TOMLFile(CONFIG_FILE_PATH).read()['directories'][tag]
     ):
-        print(f'{i + 1}: {dir_}')
-        if i + 1 in skip:
-            print('  Skipped.')
+        if i + 1 in skip_list:
+            console.print(f'{i + 1}: {dir_}', style=Style(dim=True))
+            console.print('  Skipped.', style=Style(dim=True))
             continue
+        console.print(f'{i + 1}: {dir_}')
         if not yes and not click.confirm(
             f'Run the following command?\n  $ {command} ',
             default=True,
@@ -164,15 +171,16 @@ def list_dirs(
     show_all_tags: bool = False,
 ) -> None:
     """List registered directories."""
+    console = Console()
     config_file = tomlkit.toml_file.TOMLFile(CONFIG_FILE_PATH)
     doc = config_file.read()
     dir_table: tomlkit.items.Table = doc.get('directories', tomlkit.table())
     for tag_, dir_array in dir_table.items():
         if not show_all_tags and tag_ != tag:
             continue
-        print(f'{tag_}:')
+        console.print(f'{tag_}:')
         for i, dir_ in enumerate(dir_array):
-            print(f'{i + 1}: {dir_}')
+            console.print(f'{i + 1}: {dir_}')
 
 
 if __name__ == '__main__':
