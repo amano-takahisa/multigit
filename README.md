@@ -98,3 +98,9 @@ totaliterm
 ruff check --fix
 ruff format -v
 ```
+
+Install globally
+
+```console
+pipx install .
+```

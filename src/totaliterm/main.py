@@ -94,6 +94,14 @@ def third_level_command_3() -> None:
     "'ls -lha'.",
 )
 @click.option(
+    '--skip',
+    'skip',
+    multiple=True,
+    type=int,
+    default=(),
+    help='Skip directories. Give indices of directories to skip.',
+)
+@click.option(
     '-t',
     '--tag',
     type=str,
@@ -112,12 +120,16 @@ def run(
     *,
     tag: str = 'default',
     yes: bool = False,
+    skip: tuple[int] = (),
 ) -> None:
     """Any arbitrary command you want to execute in the directory."""
     for i, dir_ in enumerate(
         tomlkit.toml_file.TOMLFile(CONFIG_FILE_PATH).read()['directories'][tag]
     ):
         print(f'{i + 1}: {dir_}')
+        if i + 1 in skip:
+            print('  Skipped.')
+            continue
         if not yes and not click.confirm(
             f'Run the following command?\n  $ {command} ',
             default=True,
