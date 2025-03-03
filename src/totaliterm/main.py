@@ -95,12 +95,6 @@ def add(
 
 
 @main.group()
-def config() -> None:
-    """Set configuration."""
-    click.echo('group: ')
-
-
-@main.group()
 def second_level_2() -> None:
     """Second level 2."""
 
@@ -108,70 +102,6 @@ def second_level_2() -> None:
 @second_level_2.command()
 def third_level_command_3() -> None:
     """Third level command under 2nd level 2."""
-
-
-@main.command(
-    help='Clone all repositories of a GitHub account.',
-)
-@click.option(
-    '--username',
-    required=True,
-    type=str,
-    help='GitHub account name',
-)
-@click.option(
-    '--options',
-    type=str,
-    default=Defaults.OPTIONS,
-    show_default=True,
-    help='git clone options.',
-)
-@click.option(
-    '-L',
-    '--limit',
-    type=int,
-    default=Defaults.LIMIT,
-    show_default=True,
-    help='Maximum number of repositories to list.',
-)
-def clone(
-    username: str,
-    options: str = '',
-    limit: int = Defaults.LIMIT,
-) -> None:
-    """Clone all repositories of a GitHub account."""
-    click.echo(f'username: {username}')
-    cmd = [
-        'gh',
-        'repo',
-        'list',
-        '--json',
-        'name',
-        '--limit',
-        str(limit),
-        username,
-    ]
-    output = subprocess.run(cmd, text=True, capture_output=True, check=True)
-    repo_names = sorted([item['name'] for item in json.loads(output.stdout)])
-    remote_repos = [
-        f'git@github.com:{username}/{repo_name}.git'
-        for repo_name in repo_names
-    ]
-    cmd = 'git clone ' + options
-    for i, (repo_name, remote_repo) in enumerate(
-        zip(repo_names, remote_repos, strict=False)
-    ):
-        click.echo(repo_name)
-        if pathlib.Path.cwd().joinpath(repo_name).exists():
-            click.echo(f'{repo_name} is exists.')
-            continue
-        click.echo(
-            f'\n{Bcolors.HEADER}{i + 1}/{len(repo_names)}: '
-            f'{repo_name}{Bcolors.ENDC}'
-        )
-        cmd_repo = cmd + f' -- {remote_repo}'
-        click.echo(f'cmd_repo: {cmd_repo}')
-        subprocess.run(cmd_repo, shell=True, check=False)
 
 
 @main.command(
