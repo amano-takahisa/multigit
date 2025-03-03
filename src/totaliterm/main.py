@@ -9,7 +9,7 @@ import click
 import tomlkit
 import tomlkit.items
 import tomlkit.toml_file
-from rich import pretty, print
+from rich import pretty, print  # noqa: A004
 
 pretty.install()
 
@@ -175,25 +175,50 @@ def clone(
 
 
 @main.command(
-    help='Execute a command at the root directory of each repository.',
+    help='Execute a command at the each directory.',
 )
 @click.option(
+    '-c',
     '--command',
     type=str,
-    help='Any arbitrary command you want to execute in the root directory '
-    'of each repository. Git directories are searched only up to the '
-    'first level. Command need to be given as a string, for example, '
+    required=True,
+    help='Any arbitrary command you want to execute in the directory. '
+    'Command need to be given as a string, for example, '
     "'ls -lha'.",
 )
-def run(command: str) -> None:
-    """Execute a command at the root directory of each repository."""
-    click.echo(f'command: {command}')
-    cwd = pathlib.Path.cwd()
-    git_dirs = sorted(cwd.glob('*/.git'))
-    for i, git_dir in enumerate(git_dirs):
-        git_root = git_dir.parent
-        click.echo(f'\n{Bcolors.HEADER}{i + 1}: {git_root.name}{Bcolors.ENDC}')
-        subprocess.run(command, shell=True, cwd=git_root, check=False)
+@click.option(
+    '-t',
+    '--tag',
+    type=str,
+    default='default',
+    show_default=True,
+    help='tag of directories.',
+)
+@click.option(
+    '-y',
+    '--yes',
+    is_flag=True,
+    help='Execute the command without confirmation.',
+)
+def run(
+    command: str,
+    *,
+    tag: str = 'default',
+    yes: bool = False,
+) -> None:
+    """Any arbitrary command you want to execute in the directory."""
+    for i, dir_ in enumerate(
+        tomlkit.toml_file.TOMLFile(CONFIG_FILE_PATH).read()['directories'][tag]
+    ):
+        print(f'{i + 1}: {dir_}')
+        if not yes and not click.confirm(
+            f'Run the following command?\n  $ {command} ',
+            default=True,
+        ):
+            continue
+        cmd = command.split()
+        # run cmd and show standard output and standard error
+        subprocess.run(cmd, cwd=dir_, check=False)
 
 
 @main.command(
