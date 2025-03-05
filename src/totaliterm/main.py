@@ -40,6 +40,7 @@ def main() -> None:
     type=pathlib.Path,
 )
 @click.option(
+    '-t',
     '--tag',
     type=str,
     default='default',
@@ -71,6 +72,11 @@ def add(
             continue
         dir_array.append(p.resolve().as_posix())
     config_file.write(doc)
+    list_dirs(
+        tag=tag,
+        show_all_tags=False,
+        list_one_per_line=False,
+    )
 
 
 @main.group()
@@ -157,34 +163,27 @@ def get_tags(
     return tags
 
 
-@main.command(
-    name='list',
-    help='List registered directories.',
-)
-@click.option(
-    '--tag',
-    type=str,
-    default='default',
-    show_default=True,
-    help='tag of directories.',
-)
-@click.option(
-    '-a',
-    '--all',
-    'show_all_tags',
-    is_flag=True,
-    help='List all directories of all tags.',
-)
 def list_dirs(
-    tag: str = 'default',
     *,
+    tag: str = 'default',
     show_all_tags: bool = False,
+    list_one_per_line: bool = False,
 ) -> None:
     """List registered directories."""
     console = Console()
     config_file = tomlkit.toml_file.TOMLFile(CONFIG_FILE_PATH)
     doc = config_file.read()
     dir_table: tomlkit.items.Table = doc.get('directories', tomlkit.table())
+    if list_one_per_line:
+        dirs = set()
+        for tag_, dir_array in dir_table.items():
+            if not show_all_tags and tag_ != tag:
+                continue
+            dirs.update(dir_array)
+        dirs = sorted(dirs)
+        for dir_ in dirs:
+            console.print(dir_)
+        return
     for tag_, dir_array in dir_table.items():
         if not show_all_tags and tag_ != tag:
             continue
@@ -198,6 +197,46 @@ def list_dirs(
                 if t != tag_
             ]
             console.print(f'{i + 1}: {dir_} : {", ".join(extra_tags)}')
+
+
+@main.command(
+    name='list',
+    help='List registered directories.',
+)
+@click.option(
+    '-t',
+    '--tag',
+    'tag',
+    type=str,
+    default='default',
+    show_default=True,
+    help='tag of directories.',
+)
+@click.option(
+    '-a',
+    '--all',
+    'show_all_tags',
+    is_flag=True,
+    help='List all directories of all tags.',
+)
+@click.option(
+    '-1',
+    'list_one_per_line',
+    is_flag=True,
+    help='List one directory per line.',
+)
+def list_dirs_command(
+    *,
+    tag: str = 'default',
+    show_all_tags: bool = False,
+    list_one_per_line: bool = False,
+) -> None:
+    """List registered directories."""
+    list_dirs(
+        tag=tag,
+        show_all_tags=show_all_tags,
+        list_one_per_line=list_one_per_line,
+    )
 
 
 if __name__ == '__main__':
