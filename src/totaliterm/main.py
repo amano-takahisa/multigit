@@ -127,8 +127,7 @@ def run(
 ) -> None:
     """Any arbitrary command you want to execute in the directory."""
     console = Console()
-    skip_list = [int(i) for i in skip.split(',')]
-    console.print(skip_list)
+    skip_list = [int(i) for i in skip.split(',') if i]
     for i, dir_ in enumerate(
         tomlkit.toml_file.TOMLFile(CONFIG_FILE_PATH).read()['directories'][tag]
     ):
@@ -144,7 +143,18 @@ def run(
             continue
         cmd = command.split()
         # run cmd and show standard output and standard error
-        subprocess.run(cmd, cwd=dir_, check=False)
+        subprocess.run(cmd, cwd=dir_, check=False)  # noqa: S603
+
+
+def get_tags(
+    dir_path: pathlib.Path, dir_table: tomlkit.items.Table
+) -> list[str]:
+    """Get tags of a directory."""
+    tags = []
+    for tag, dir_array in dir_table.items():
+        if dir_path.resolve().as_posix() in dir_array:
+            tags.append(tag)
+    return tags
 
 
 @main.command(
@@ -180,7 +190,14 @@ def list_dirs(
             continue
         console.print(f'{tag_}:')
         for i, dir_ in enumerate(dir_array):
-            console.print(f'{i + 1}: {dir_}')
+            extra_tags = [
+                t
+                for t in get_tags(
+                    dir_path=pathlib.Path(dir_), dir_table=dir_table
+                )
+                if t != tag_
+            ]
+            console.print(f'{i + 1}: {dir_} : {", ".join(extra_tags)}')
 
 
 if __name__ == '__main__':
